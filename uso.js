@@ -187,7 +187,7 @@ function spinWheel() {
 
     currentRotation = targetRotation;
     const winner = pickWinner(currentRotation);
-    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela para registrar o brinde.</span>`;
+    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
   }
 
