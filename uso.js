@@ -64,6 +64,39 @@ function getResponsiveWheelSize(nextConfig) {
   return Math.max(260, Math.min(configuredSize, viewportWidth - horizontalPadding));
 }
 
+function wrapText(text, maxCharsPerLine = 14, maxLines = 3) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (nextLine.length <= maxCharsPerLine) {
+      currentLine = nextLine;
+      return;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    currentLine = word;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length <= maxLines) {
+    return lines;
+  }
+
+  const visibleLines = lines.slice(0, maxLines);
+  const lastLine = visibleLines[maxLines - 1];
+  visibleLines[maxLines - 1] = `${lastLine.slice(0, Math.max(0, maxCharsPerLine - 1))}…`;
+  return visibleLines;
+}
+
 function drawWheel(rotationDeg = 0) {
   const size = canvas.width;
   const radius = size / 2;
@@ -90,10 +123,23 @@ function drawWheel(rotationDeg = 0) {
 
     ctx.save();
     ctx.rotate(startAngle + sliceAngle / 2);
-    ctx.textAlign = "right";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillStyle = config.textColor;
-    ctx.font = `bold ${Math.max(16, size * 0.04)}px ${config.fontFamily}`;
-    ctx.fillText(item.label, radius - 24, 10);
+    ctx.shadowBlur = 0;
+
+    const fontSize = Math.max(11, size * 0.032);
+    const lineHeight = fontSize * 1.08;
+    const textRadius = radius * 0.63;
+    const maxCharsPerLine = size <= 320 ? 11 : 14;
+    const lines = wrapText(item.label, maxCharsPerLine, 3);
+    const totalHeight = (lines.length - 1) * lineHeight;
+
+    ctx.font = `700 ${fontSize}px ${config.fontFamily}`;
+    lines.forEach((line, lineIndex) => {
+      const y = lineIndex * lineHeight - totalHeight / 2;
+      ctx.fillText(line, textRadius, y);
+    });
     ctx.restore();
   });
 
