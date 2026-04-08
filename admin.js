@@ -7,10 +7,7 @@ const loginFeedback = document.getElementById("login-feedback");
 const configFeedback = document.getElementById("config-feedback");
 const credentialsFeedback = document.getElementById("credentials-feedback");
 const wheelSizeValue = document.getElementById("wheel-size-value");
-const STORAGE_KEYS = {
-  config: "roletaEdenConfig",
-  credentials: "roletaEdenCredentials",
-};
+const API_URL = "./data-store.php";
 
 const defaultCredentials = {
   username: "admin",
@@ -42,25 +39,19 @@ const defaultConfig = {
 
 let authenticated = false;
 
-function readJson(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (error) {
-    return fallback;
+async function request(action, payload) {
+  const response = await fetch(`${API_URL}?action=${action}`, {
+    method: payload ? "POST" : "GET",
+    headers: payload ? { "Content-Type": "application/json" } : undefined,
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Nao foi possivel concluir a operacao.");
   }
-}
 
-function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function getSavedCredentials() {
-  return readJson(STORAGE_KEYS.credentials, defaultCredentials);
-}
-
-function getSavedConfig() {
-  return readJson(STORAGE_KEYS.config, defaultConfig);
+  return data;
 }
 
 function setFeedback(element, message, type) {
@@ -105,26 +96,31 @@ function fillConfigForm(config) {
 }
 
 async function loadConfig() {
-  fillConfigForm(getSavedConfig());
+  const data = await request("read");
+  fillConfigForm(data.config || defaultConfig);
 }
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const username = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
-  const data = getSavedCredentials();
+  try {
+    const username = document.getElementById("login-username").value;
+    const password = document.getElementById("login-password").value;
+    const data = await request("login", { username, password });
 
-  if (username !== data.username || password !== data.password) {
-    setFeedback(loginFeedback, "Login ou senha invalidos.", "error");
-    return;
+    if (!data.success) {
+      setFeedback(loginFeedback, "Login ou senha invalidos.", "error");
+      return;
+    }
+
+    authenticated = true;
+    authPanel.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+    setFeedback(loginFeedback, "", "");
+    await loadConfig();
+  } catch (error) {
+    setFeedback(loginFeedback, error.message, "error");
   }
-
-  authenticated = true;
-  authPanel.classList.add("hidden");
-  adminPanel.classList.remove("hidden");
-  setFeedback(loginFeedback, "", "");
-  await loadConfig();
 });
 
 document.getElementById("wheelSize").addEventListener("input", (event) => {
@@ -136,84 +132,58 @@ configForm.addEventListener("submit", async (event) => {
 
   if (!authenticated) return;
 
-  const config = {
-    title: document.getElementById("title").value.trim(),
-    subtitle: document.getElementById("subtitle").value.trim(),
-    spinButtonText: document.getElementById("spinButtonText").value.trim(),
-    wheelSize: Number(document.getElementById("wheelSize").value),
-    fontFamily: document.getElementById("fontFamily").value.trim(),
-    backgroundStart: document.getElementById("backgroundStart").value,
-    backgroundEnd: document.getElementById("backgroundEnd").value,
-    pointerColor: document.getElementById("pointerColor").value,
-    centerColor: document.getElementById("centerColor").value,
-    wheelBorderColor: document.getElementById("wheelBorderColor").value,
-    textColor: document.getElementById("textColor").value,
-    shadowColor: document.getElementById("shadowColor").value.trim(),
-    items: textToItems(document.getElementById("items").value),
-  };
+  try {
+    const config = {
+      title: document.getElementById("title").value.trim(),
+      subtitle: document.getElementById("subtitle").value.trim(),
+      spinButtonText: document.getElementById("spinButtonText").value.trim(),
+      wheelSize: Number(document.getElementById("wheelSize").value),
+      fontFamily: document.getElementById("fontFamily").value.trim(),
+      backgroundStart: document.getElementById("backgroundStart").value,
+      backgroundEnd: document.getElementById("backgroundEnd").value,
+      pointerColor: document.getElementById("pointerColor").value,
+      centerColor: document.getElementById("centerColor").value,
+      wheelBorderColor: document.getElementById("wheelBorderColor").value,
+      textColor: document.getElementById("textColor").value,
+      shadowColor: document.getElementById("shadowColor").value.trim(),
+      items: textToItems(document.getElementById("items").value),
+    };
 
-  if (config.items.length < 2) {
-    setFeedback(
-      configFeedback,
-      "Adicione pelo menos dois itens na roleta.",
-      "error"
-    );
-    return;
+    if (config.items.length < 2) {
+      setFeedback(
+        configFeedback,
+        "Adicione pelo menos dois itens na roleta.",
+        "error"
+      );
+      return;
+    }
+
+    await request("save-config", { config });
+    setFeedback(configFeedback, "Configuracao salva com sucesso.", "success");
+  } catch (error) {
+    setFeedback(configFeedback, error.message, "error");
   }
-
-  writeJson(STORAGE_KEYS.config, config);
-  setFeedback(configFeedback, "Configuracao salva com sucesso.", "success");
 });
 
 credentialsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const payload = {
-    currentUsername: document.getElementById("currentUsername").value.trim(),
-    currentPassword: document.getElementById("currentPassword").value,
-    newUsername: document.getElementById("newUsername").value.trim(),
-    newPassword: document.getElementById("newPassword").value,
-  };
+  try {
+    const payload = {
+      currentUsername: document.getElementById("currentUsername").value.trim(),
+      currentPassword: document.getElementById("currentPassword").value,
+      newUsername: document.getElementById("newUsername").value.trim(),
+      newPassword: document.getElementById("newPassword").value,
+    };
 
-  const data = getSavedCredentials();
-
-  if (
-    payload.currentUsername !== data.username ||
-    payload.currentPassword !== data.password
-  ) {
+    await request("update-credentials", payload);
+    credentialsForm.reset();
     setFeedback(
       credentialsFeedback,
-      "Credenciais atuais invalidas.",
-      "error"
+      "Login e senha atualizados com sucesso para todos os acessos.",
+      "success"
     );
-    return;
+  } catch (error) {
+    setFeedback(credentialsFeedback, error.message, "error");
   }
-
-  if (!payload.newUsername || !payload.newPassword) {
-    setFeedback(
-      credentialsFeedback,
-      "Novo login e senha sao obrigatorios.",
-      "error"
-    );
-    return;
-  }
-
-  writeJson(STORAGE_KEYS.credentials, {
-    username: payload.newUsername,
-    password: payload.newPassword,
-  });
-  credentialsForm.reset();
-  setFeedback(
-    credentialsFeedback,
-    "Login e senha atualizados neste navegador com sucesso.",
-    "success"
-  );
 });
-
-if (!localStorage.getItem(STORAGE_KEYS.credentials)) {
-  writeJson(STORAGE_KEYS.credentials, defaultCredentials);
-}
-
-if (!localStorage.getItem(STORAGE_KEYS.config)) {
-  writeJson(STORAGE_KEYS.config, defaultConfig);
-}

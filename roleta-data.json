@@ -1,0 +1,46 @@
+{
+  "credentials": {
+    "username": "admin",
+    "password": "1234"
+  },
+  "config": {
+    "title": "Roleta de Brindes",
+    "subtitle": "Gire a roleta, descubra seu brinde e tire um print da tela.",
+    "spinButtonText": "Girar roleta",
+    "pointerColor": "#f4f1de",
+    "centerColor": "#ffffff",
+    "backgroundStart": "#17324d",
+    "backgroundEnd": "#0a1724",
+    "wheelBorderColor": "#ffffff",
+    "textColor": "#ffffff",
+    "shadowColor": "rgba(0, 0, 0, 0.25)",
+    "wheelSize": 420,
+    "fontFamily": "'Trebuchet MS', sans-serif",
+    "items": [
+      {
+        "label": "+100ML",
+        "color": "#e76f51"
+      },
+      {
+        "label": "Adicional Nutella",
+        "color": "#2a9d8f"
+      },
+      {
+        "label": "Desconto 15%",
+        "color": "#e9c46a"
+      },
+      {
+        "label": "Adicional Creme",
+        "color": "#264653"
+      },
+      {
+        "label": "Brinde Surpresa",
+        "color": "#f4a261"
+      },
+      {
+        "label": "Adicional Ovomaltine",
+        "color": "#8ab17d"
+      }
+    ]
+  }
+}

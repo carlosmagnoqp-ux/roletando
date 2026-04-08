@@ -1,0 +1,40 @@
+{
+  "title": "Roleta de Brindes",
+  "subtitle": "Gire a roleta, descubra seu brinde e tire um print da tela.",
+  "spinButtonText": "Girar roleta",
+  "pointerColor": "#f4f1de",
+  "centerColor": "#ffffff",
+  "backgroundStart": "#17324d",
+  "backgroundEnd": "#0a1724",
+  "wheelBorderColor": "#ffffff",
+  "textColor": "#ffffff",
+  "shadowColor": "rgba(0, 0, 0, 0.25)",
+  "wheelSize": 420,
+  "fontFamily": "'Trebuchet MS', sans-serif",
+  "items": [
+    {
+      "label": "AcaI 300ml",
+      "color": "#7b2d8e"
+    },
+    {
+      "label": "AcaI 500ml",
+      "color": "#5a189a"
+    },
+    {
+      "label": "AcaI com banana",
+      "color": "#9d4edd"
+    },
+    {
+      "label": "AcaI com morango",
+      "color": "#c77dff"
+    },
+    {
+      "label": "Cupom 10% OFF",
+      "color": "#6a4c93"
+    },
+    {
+      "label": "Granola extra",
+      "color": "#b07d32"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ let config;
 let currentRotation = 0;
 let spinning = false;
 let renderedWheelSize = 420;
-const STORAGE_KEY = "roletaEdenConfig";
+const CONFIG_URL = "./config.json";
 const defaultConfig = {
   title: "Roleta de Brindes",
   subtitle: "Gire a roleta, descubra seu brinde e tire um print da tela.",
@@ -34,15 +34,6 @@ const defaultConfig = {
     { label: "Squeeze", color: "#8ab17d" },
   ],
 };
-
-function getSavedConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : defaultConfig;
-  } catch (error) {
-    return defaultConfig;
-  }
-}
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
@@ -158,7 +149,24 @@ function spinWheel() {
 }
 
 async function loadConfig() {
-  config = getSavedConfig();
+  try {
+    const response = await fetch(CONFIG_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Nao foi possivel carregar o config.json.");
+    }
+
+    const data = await response.json();
+    config = {
+      ...defaultConfig,
+      ...data,
+      items: Array.isArray(data.items) && data.items.length >= 2
+        ? data.items
+        : defaultConfig.items,
+    };
+  } catch (error) {
+    config = defaultConfig;
+  }
+
   applyTheme(config);
   drawWheel(currentRotation);
 }
