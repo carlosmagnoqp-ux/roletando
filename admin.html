@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administracao | Roleta Eden</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="admin-page">
+    <main class="page-shell">
+      <a class="back-link" href="./index.html">Voltar para a entrada</a>
+
+      <section class="panel auth-panel" id="auth-panel">
+        <p class="eyebrow">Entrada Administrativa</p>
+        <h1>Painel de personalizacao da roleta</h1>
+        <p>Entre com login e senha para editar toda a experiencia.</p>
+
+        <form id="login-form" class="stack-form">
+          <label>
+            Login
+            <input type="text" id="login-username" required />
+          </label>
+          <label>
+            Senha
+            <input type="password" id="login-password" required />
+          </label>
+          <button type="submit" class="primary-button">Entrar</button>
+        </form>
+        <p class="feedback" id="login-feedback"></p>
+      </section>
+
+      <section class="panel admin-panel hidden" id="admin-panel">
+        <div class="admin-grid">
+          <div>
+            <p class="eyebrow">Configuracao visual</p>
+            <h2>Aparencia da roleta</h2>
+            <form id="config-form" class="stack-form">
+              <label>
+                Titulo
+                <input type="text" id="title" />
+              </label>
+              <label>
+                Subtitulo
+                <textarea id="subtitle" rows="3"></textarea>
+              </label>
+              <label>
+                Texto do botao
+                <input type="text" id="spinButtonText" />
+              </label>
+              <label>
+                Tamanho da roleta
+                <input type="range" id="wheelSize" min="280" max="520" step="10" />
+                <span id="wheel-size-value"></span>
+              </label>
+              <label>
+                Fonte
+                <input type="text" id="fontFamily" />
+              </label>
+              <label>
+                Fundo inicial
+                <input type="color" id="backgroundStart" />
+              </label>
+              <label>
+                Fundo final
+                <input type="color" id="backgroundEnd" />
+              </label>
+              <label>
+                Cor do ponteiro
+                <input type="color" id="pointerColor" />
+              </label>
+              <label>
+                Cor do centro
+                <input type="color" id="centerColor" />
+              </label>
+              <label>
+                Cor da borda da roleta
+                <input type="color" id="wheelBorderColor" />
+              </label>
+              <label>
+                Cor do texto
+                <input type="color" id="textColor" />
+              </label>
+              <label>
+                Cor da sombra
+                <input type="text" id="shadowColor" />
+              </label>
+
+              <label>
+                Itens da roleta
+                <textarea
+                  id="items"
+                  rows="10"
+                  placeholder="Um item por linha no formato: Nome | #cor"
+                ></textarea>
+              </label>
+
+              <button type="submit" class="primary-button">Salvar configuracao</button>
+            </form>
+            <p class="feedback" id="config-feedback"></p>
+          </div>
+
+          <div>
+            <p class="eyebrow">Seguranca</p>
+            <h2>Alterar login e senha</h2>
+            <form id="credentials-form" class="stack-form">
+              <label>
+                Login atual
+                <input type="text" id="currentUsername" required />
+              </label>
+              <label>
+                Senha atual
+                <input type="password" id="currentPassword" required />
+              </label>
+              <label>
+                Novo login
+                <input type="text" id="newUsername" required />
+              </label>
+              <label>
+                Nova senha
+                <input type="password" id="newPassword" required />
+              </label>
+              <button type="submit" class="secondary-button">Atualizar acesso</button>
+            </form>
+            <p class="feedback" id="credentials-feedback"></p>
+
+            <div class="note-box">
+              <strong>Arquivo de credenciais</strong>
+              <p>
+                O login e a senha ficam salvos neste navegador para uso rapido em
+                hospedagem tipo <code>htdocs</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./admin.js"></script>
+  </body>
+</html>
