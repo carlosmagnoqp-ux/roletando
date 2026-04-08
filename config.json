@@ -13,19 +13,19 @@
   "fontFamily": "'Trebuchet MS', sans-serif",
   "items": [
     {
-      "label": "AcaI 300ml",
+      "label": "+100 ML",
       "color": "#7b2d8e"
     },
     {
-      "label": "AcaI 500ml",
+      "label": "Adicional de Morango",
       "color": "#5a189a"
     },
     {
-      "label": "AcaI com banana",
+      "label": "Adicional de Nutella",
       "color": "#9d4edd"
     },
     {
-      "label": "AcaI com morango",
+      "label": "Desconto de 20% na próxima compra",
       "color": "#c77dff"
     },
     {
@@ -33,7 +33,7 @@
       "color": "#6a4c93"
     },
     {
-      "label": "Granola extra",
+      "label": "Adicional Surpresa",
       "color": "#b07d32"
     }
   ]
