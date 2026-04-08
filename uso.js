@@ -10,6 +10,7 @@ const wheelCenter = document.querySelector(".wheel-center");
 let config;
 let currentRotation = 0;
 let spinning = false;
+let renderedWheelSize = 420;
 const STORAGE_KEY = "roletaEdenConfig";
 const defaultConfig = {
   title: "Roleta de Brindes",
@@ -57,11 +58,19 @@ function applyTheme(nextConfig) {
   pointer.style.borderTopColor = nextConfig.pointerColor;
   wheelCenter.style.background = nextConfig.centerColor;
 
-  const size = Number(nextConfig.wheelSize) || 420;
+  const size = getResponsiveWheelSize(nextConfig);
+  renderedWheelSize = size;
   canvas.width = size;
   canvas.height = size;
   canvas.style.width = `${size}px`;
   canvas.style.height = `${size}px`;
+}
+
+function getResponsiveWheelSize(nextConfig) {
+  const configuredSize = Number(nextConfig.wheelSize) || 420;
+  const viewportWidth = window.innerWidth || configuredSize;
+  const horizontalPadding = viewportWidth <= 640 ? 56 : 96;
+  return Math.max(260, Math.min(configuredSize, viewportWidth - horizontalPadding));
 }
 
 function drawWheel(rotationDeg = 0) {
@@ -109,7 +118,7 @@ function drawWheel(rotationDeg = 0) {
 
 function pickWinner(finalRotation) {
   const normalizedRotation = ((finalRotation % 360) + 360) % 360;
-  const pointerAngle = (360 - normalizedRotation + 270) % 360;
+  const pointerAngle = (360 - normalizedRotation) % 360;
   const sliceSize = 360 / config.items.length;
   const winnerIndex = Math.floor(pointerAngle / sliceSize) % config.items.length;
   return config.items[winnerIndex];
@@ -153,6 +162,16 @@ async function loadConfig() {
   applyTheme(config);
   drawWheel(currentRotation);
 }
+
+window.addEventListener("resize", () => {
+  if (!config) return;
+
+  const nextSize = getResponsiveWheelSize(config);
+  if (nextSize === renderedWheelSize) return;
+
+  applyTheme(config);
+  drawWheel(currentRotation);
+});
 
 spinButton.addEventListener("click", spinWheel);
 loadConfig();
