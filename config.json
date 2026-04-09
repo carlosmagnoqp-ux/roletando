@@ -13,27 +13,27 @@
   "fontFamily": "'Trebuchet MS', sans-serif",
   "items": [
     {
-      "label": "+100 ML",
+      "label": "1 +100 ML",
       "color": "#7b2d8e"
     },
     {
-      "label": "Adicional de Morango",
+      "label": "1 Adicional de banana",
       "color": "#5a189a"
     },
     {
-      "label": "Adicional de Nutella",
+      "label": "1 Adicional de Nutella",
       "color": "#9d4edd"
     },
     {
-      "label": "Desconto de 20% na próxima compra",
+      "label": "1 Copo Crocante",
       "color": "#c77dff"
     },
     {
-      "label": "Cupom 10% OFF",
+      "label": "1 Adicional Creme de Ninho",
       "color": "#6a4c93"
     },
     {
-      "label": "Adicional Surpresa",
+      "label": "1Adicional Surpresa",
       "color": "#b07d32"
     }
   ]
