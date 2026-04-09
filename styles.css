@@ -146,20 +146,15 @@ h2 {
 }
 
 .wheel-frame {
-  position: relative;
   display: grid;
   place-items: center;
+  gap: 14px;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding-top: 42px;
 }
 
 .spin-datetime {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: min(100%, 360px);
   padding: 8px 14px;
   border-radius: 999px;
@@ -170,6 +165,12 @@ h2 {
   line-height: 1.25;
   box-shadow: 0 10px 24px rgba(16, 32, 51, 0.12);
   text-align: center;
+}
+
+.wheel-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
 }
 
 .pointer {
@@ -329,7 +330,7 @@ input[type="range"] {
   }
 
   .pointer {
-    top: 26px;
+    top: -4px;
     border-left-width: 16px;
     border-right-width: 16px;
     border-top-width: 30px;
