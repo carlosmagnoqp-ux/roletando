@@ -74,11 +74,6 @@ function updateCooldownState() {
     spinButton.disabled = false;
     spinButton.textContent = buttonLabel;
 
-    if (!spinning) {
-      resultBox.innerHTML =
-        "<strong>Seu brinde aparecera aqui.</strong><span>Tire um print assim que a roleta parar.</span>";
-    }
-
     if (cooldownTimerId) {
       clearInterval(cooldownTimerId);
       cooldownTimerId = null;
@@ -88,12 +83,6 @@ function updateCooldownState() {
 
   spinButton.disabled = true;
   spinButton.textContent = `Disponivel em ${formatRemainingTime(remaining)}`;
-
-  if (!spinning) {
-    resultBox.innerHTML = `<strong>Voce ja girou a roleta.</strong><span>Aguarde ${formatRemainingTime(
-      remaining
-    )} para tentar novamente.</span>`;
-  }
 }
 
 function startCooldownTimer() {
