@@ -4,6 +4,7 @@ const spinButton = document.getElementById("spin-button");
 const resultBox = document.getElementById("result-box");
 const wheelTitle = document.getElementById("wheel-title");
 const wheelSubtitle = document.getElementById("wheel-subtitle");
+const spinDatetime = document.getElementById("spin-datetime");
 const pointer = document.querySelector(".pointer");
 const wheelCenter = document.querySelector(".wheel-center");
 
@@ -259,9 +260,8 @@ function spinWheel() {
     const winner = pickWinner(currentRotation);
     const spinTimestamp = Date.now();
     localStorage.setItem(COOLDOWN_STORAGE_KEY, String(spinTimestamp));
-    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span><span>Data do sorteio: ${formatFullDateTime(
-      new Date(spinTimestamp)
-    )}</span>`;
+    spinDatetime.textContent = `Data do sorteio: ${formatFullDateTime(new Date(spinTimestamp))}`;
+    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
     startCooldownTimer();
   }

@@ -152,6 +152,24 @@ h2 {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
+  padding-top: 42px;
+}
+
+.spin-datetime {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 360px);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #5f3452;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.25;
+  box-shadow: 0 10px 24px rgba(16, 32, 51, 0.12);
+  text-align: center;
 }
 
 .pointer {
@@ -311,10 +329,16 @@ input[type="range"] {
   }
 
   .pointer {
-    top: -4px;
+    top: 26px;
     border-left-width: 16px;
     border-right-width: 16px;
     border-top-width: 30px;
+  }
+
+  .spin-datetime {
+    width: min(100%, 280px);
+    padding: 7px 12px;
+    font-size: 0.74rem;
   }
 
   .wheel-center {
