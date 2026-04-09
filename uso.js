@@ -16,6 +16,7 @@ const CONFIG_URL = "./config.json";
 const COOLDOWN_STORAGE_KEY = "roletaEdenLastSpinAt";
 const COOLDOWN_MS = 6 * 60 * 60 * 1000;
 let cooldownTimerId = null;
+let dateTimeTimerId = null;
 const defaultConfig = {
   title: "Roleta de Brindes",
   subtitle: "Gire a roleta, descubra seu brinde e tire um print da tela.",
@@ -58,6 +59,20 @@ function formatFullDateTime(date = new Date()) {
     dateStyle: "full",
     timeStyle: "medium",
   }).format(date);
+}
+
+function startDateTimeClock() {
+  const renderNow = () => {
+    spinDatetime.textContent = formatFullDateTime(new Date());
+  };
+
+  renderNow();
+
+  if (dateTimeTimerId) {
+    clearInterval(dateTimeTimerId);
+  }
+
+  dateTimeTimerId = window.setInterval(renderNow, 1000);
 }
 
 function getLastSpinAt() {
@@ -260,7 +275,6 @@ function spinWheel() {
     const winner = pickWinner(currentRotation);
     const spinTimestamp = Date.now();
     localStorage.setItem(COOLDOWN_STORAGE_KEY, String(spinTimestamp));
-    spinDatetime.textContent = `Data do sorteio: ${formatFullDateTime(new Date(spinTimestamp))}`;
     resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
     startCooldownTimer();
@@ -291,6 +305,7 @@ async function loadConfig() {
   applyTheme(config);
   drawWheel(currentRotation);
   updateCooldownState();
+  startDateTimeClock();
 }
 
 window.addEventListener("resize", () => {
