@@ -68,6 +68,7 @@ function buildWhatsAppText(winnerLabel) {
 }
 
 function updateWhatsAppButtonState() {
+  if (!whatsappButton) return;
   const hasWinner = Boolean(lastWinner);
   const hasNumber = Boolean(sanitizeWhatsAppNumber(config?.whatsappNumber));
   whatsappButton.disabled = !(hasWinner && hasNumber);
@@ -495,7 +496,9 @@ function spinWheel() {
   ensureAudioContext();
   spinning = true;
   spinButton.disabled = true;
-  whatsappButton.disabled = true;
+  if (whatsappButton) {
+    whatsappButton.disabled = true;
+  }
   lastWinner = null;
   resultBox.innerHTML = "<strong>Girando...</strong><span>Aguarde o resultado.</span>";
 
@@ -574,5 +577,7 @@ window.addEventListener("resize", () => {
 });
 
 spinButton.addEventListener("click", spinWheel);
-whatsappButton.addEventListener("click", shareResultOnWhatsApp);
+if (whatsappButton) {
+  whatsappButton.addEventListener("click", shareResultOnWhatsApp);
+}
 loadConfig();
