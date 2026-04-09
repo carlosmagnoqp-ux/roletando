@@ -12,6 +12,9 @@ let currentRotation = 0;
 let spinning = false;
 let renderedWheelSize = 420;
 const CONFIG_URL = "./config.json";
+const COOLDOWN_STORAGE_KEY = "roletaEdenLastSpinAt";
+const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+let cooldownTimerId = null;
 const defaultConfig = {
   title: "Roleta de Brindes",
   subtitle: "Gire a roleta, descubra seu brinde e tire um print da tela.",
@@ -37,6 +40,72 @@ const defaultConfig = {
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
+}
+
+function formatRemainingTime(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+function getLastSpinAt() {
+  const raw = localStorage.getItem(COOLDOWN_STORAGE_KEY);
+  const timestamp = Number(raw);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function getRemainingCooldown() {
+  const lastSpinAt = getLastSpinAt();
+  if (!lastSpinAt) return 0;
+
+  const elapsed = Date.now() - lastSpinAt;
+  return Math.max(0, COOLDOWN_MS - elapsed);
+}
+
+function updateCooldownState() {
+  const remaining = getRemainingCooldown();
+  const buttonLabel = config?.spinButtonText || defaultConfig.spinButtonText;
+
+  if (remaining <= 0) {
+    spinButton.disabled = false;
+    spinButton.textContent = buttonLabel;
+
+    if (!spinning) {
+      resultBox.innerHTML =
+        "<strong>Seu brinde aparecera aqui.</strong><span>Tire um print assim que a roleta parar.</span>";
+    }
+
+    if (cooldownTimerId) {
+      clearInterval(cooldownTimerId);
+      cooldownTimerId = null;
+    }
+    return;
+  }
+
+  spinButton.disabled = true;
+  spinButton.textContent = `Disponivel em ${formatRemainingTime(remaining)}`;
+
+  if (!spinning) {
+    resultBox.innerHTML = `<strong>Voce ja girou a roleta.</strong><span>Aguarde ${formatRemainingTime(
+      remaining
+    )} para tentar novamente.</span>`;
+  }
+}
+
+function startCooldownTimer() {
+  updateCooldownState();
+
+  if (cooldownTimerId) {
+    clearInterval(cooldownTimerId);
+  }
+
+  cooldownTimerId = window.setInterval(() => {
+    updateCooldownState();
+  }, 1000);
 }
 
 function applyTheme(nextConfig) {
@@ -162,8 +231,13 @@ function pickWinner(finalRotation) {
 }
 
 function spinWheel() {
-  if (spinning) return;
+  if (spinning || getRemainingCooldown() > 0) {
+    updateCooldownState();
+    return;
+  }
+
   spinning = true;
+  spinButton.disabled = true;
   resultBox.innerHTML = "<strong>Girando...</strong><span>Aguarde o resultado.</span>";
 
   const extraTurns = 6 + Math.floor(Math.random() * 3);
@@ -187,8 +261,10 @@ function spinWheel() {
 
     currentRotation = targetRotation;
     const winner = pickWinner(currentRotation);
+    localStorage.setItem(COOLDOWN_STORAGE_KEY, String(Date.now()));
     resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
+    startCooldownTimer();
   }
 
   requestAnimationFrame(animate);
@@ -215,6 +291,7 @@ async function loadConfig() {
 
   applyTheme(config);
   drawWheel(currentRotation);
+  updateCooldownState();
 }
 
 window.addEventListener("resize", () => {
@@ -225,6 +302,7 @@ window.addEventListener("resize", () => {
 
   applyTheme(config);
   drawWheel(currentRotation);
+  updateCooldownState();
 });
 
 spinButton.addEventListener("click", spinWheel);
