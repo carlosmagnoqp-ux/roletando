@@ -12,6 +12,8 @@ let config;
 let currentRotation = 0;
 let spinning = false;
 let renderedWheelSize = 420;
+let audioContext = null;
+let lastTickSliceIndex = null;
 const CONFIG_URL = "./config.json";
 const COOLDOWN_STORAGE_KEY = "roletaEdenLastSpinAt";
 const COOLDOWN_MS = 6 * 60 * 60 * 1000;
@@ -42,6 +44,69 @@ const defaultConfig = {
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
+}
+
+function ensureAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  return audioContext;
+}
+
+function playRouletteTick() {
+  const context = ensureAudioContext();
+  if (!context) return;
+
+  const now = context.currentTime;
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+  const filter = context.createBiquadFilter();
+
+  oscillator.type = "square";
+  oscillator.frequency.setValueAtTime(1850, now);
+  oscillator.frequency.exponentialRampToValueAtTime(1100, now + 0.03);
+
+  filter.type = "bandpass";
+  filter.frequency.setValueAtTime(1400, now);
+  filter.Q.setValueAtTime(1.8, now);
+
+  gainNode.gain.setValueAtTime(0.0001, now);
+  gainNode.gain.exponentialRampToValueAtTime(0.035, now + 0.005);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+  oscillator.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(context.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.05);
+}
+
+function getSliceBoundaryIndex(rotationDeg) {
+  const sliceSize = 360 / config.items.length;
+  const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
+  return Math.floor(normalizedRotation / sliceSize);
+}
+
+function syncRouletteTick(rotationDeg) {
+  const sliceIndex = getSliceBoundaryIndex(rotationDeg);
+  if (lastTickSliceIndex === null) {
+    lastTickSliceIndex = sliceIndex;
+    return;
+  }
+
+  if (sliceIndex !== lastTickSliceIndex) {
+    playRouletteTick();
+    lastTickSliceIndex = sliceIndex;
+  }
 }
 
 function formatRemainingTime(ms) {
@@ -183,6 +248,9 @@ function drawWheel(rotationDeg = 0) {
   const radius = size / 2;
   const items = config.items;
   const sliceAngle = (Math.PI * 2) / items.length;
+  const outerRadius = radius - 6;
+  const dividerDotRadius = Math.max(3, size * 0.009);
+  const dividerDotDistance = outerRadius - Math.max(10, size * 0.03);
 
   ctx.clearRect(0, 0, size, size);
   ctx.save();
@@ -195,7 +263,7 @@ function drawWheel(rotationDeg = 0) {
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, radius - 6, startAngle, endAngle);
+    ctx.arc(0, 0, outerRadius, startAngle, endAngle);
     ctx.closePath();
     ctx.fillStyle = item.color;
     ctx.shadowColor = config.shadowColor;
@@ -222,10 +290,19 @@ function drawWheel(rotationDeg = 0) {
       ctx.fillText(line, textRadius, y);
     });
     ctx.restore();
+
+    ctx.save();
+    ctx.rotate(endAngle);
+    ctx.beginPath();
+    ctx.arc(dividerDotDistance, 0, dividerDotRadius, 0, Math.PI * 2);
+    ctx.fillStyle = config.wheelBorderColor;
+    ctx.shadowBlur = 0;
+    ctx.fill();
+    ctx.restore();
   });
 
   ctx.beginPath();
-  ctx.arc(0, 0, radius - 6, 0, Math.PI * 2);
+  ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
   ctx.lineWidth = 6;
   ctx.strokeStyle = config.wheelBorderColor;
   ctx.shadowBlur = 0;
@@ -248,6 +325,7 @@ function spinWheel() {
     return;
   }
 
+  ensureAudioContext();
   spinning = true;
   spinButton.disabled = true;
   resultBox.innerHTML = "<strong>Girando...</strong><span>Aguarde o resultado.</span>";
@@ -257,6 +335,7 @@ function spinWheel() {
   const targetRotation = currentRotation + extraTurns * 360 + randomOffset;
   const duration = 5200;
   const start = performance.now();
+  lastTickSliceIndex = getSliceBoundaryIndex(currentRotation);
 
   function animate(now) {
     const elapsed = now - start;
@@ -264,6 +343,7 @@ function spinWheel() {
     const eased = 1 - Math.pow(1 - progress, 4);
     const rotation = currentRotation + (targetRotation - currentRotation) * eased;
 
+    syncRouletteTick(rotation);
     drawWheel(rotation);
 
     if (progress < 1) {
@@ -277,6 +357,7 @@ function spinWheel() {
     localStorage.setItem(COOLDOWN_STORAGE_KEY, String(spinTimestamp));
     resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
+    lastTickSliceIndex = null;
     startCooldownTimer();
   }
 
