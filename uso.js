@@ -290,6 +290,10 @@ function drawWheel(rotationDeg = 0) {
       ctx.fillText(line, textRadius, y);
     });
     ctx.restore();
+  });
+
+  items.forEach((_, index) => {
+    const endAngle = (index + 1) * sliceAngle - Math.PI / 2;
 
     ctx.save();
     ctx.rotate(endAngle);
