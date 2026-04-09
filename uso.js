@@ -1,6 +1,7 @@
 const canvas = document.getElementById("wheel-canvas");
 const ctx = canvas.getContext("2d");
 const spinButton = document.getElementById("spin-button");
+const whatsappButton = document.getElementById("whatsapp-button");
 const resultBox = document.getElementById("result-box");
 const wheelTitle = document.getElementById("wheel-title");
 const wheelSubtitle = document.getElementById("wheel-subtitle");
@@ -14,6 +15,7 @@ let spinning = false;
 let renderedWheelSize = 420;
 let audioContext = null;
 let lastTickSliceIndex = null;
+let lastWinner = null;
 const CONFIG_URL = "./config.json";
 const COOLDOWN_STORAGE_KEY = "roletaEdenLastSpinAt";
 const COOLDOWN_MS = 6 * 60 * 60 * 1000;
@@ -32,6 +34,8 @@ const defaultConfig = {
   shadowColor: "rgba(0, 0, 0, 0.25)",
   wheelSize: 420,
   fontFamily: "'Trebuchet MS', sans-serif",
+  whatsappNumber: "",
+  whatsappMessage: "Oi! Acabei de girar a Roleta Eden e esse foi o meu resultado:",
   items: [
     { label: "Caneca", color: "#e76f51" },
     { label: "Chaveiro", color: "#2a9d8f" },
@@ -44,6 +48,29 @@ const defaultConfig = {
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
+}
+
+function sanitizeWhatsAppNumber(value = "") {
+  return String(value).replace(/\D/g, "");
+}
+
+function formatShareTimestamp(date = new Date()) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(date);
+}
+
+function buildWhatsAppText(winnerLabel) {
+  const baseMessage = config?.whatsappMessage || defaultConfig.whatsappMessage;
+  const timestamp = formatShareTimestamp(new Date());
+  return `${baseMessage} Premio: ${winnerLabel}. Data: ${timestamp}.`;
+}
+
+function updateWhatsAppButtonState() {
+  const hasWinner = Boolean(lastWinner);
+  const hasNumber = Boolean(sanitizeWhatsAppNumber(config?.whatsappNumber));
+  whatsappButton.disabled = !(hasWinner && hasNumber);
 }
 
 function ensureAudioContext() {
@@ -243,6 +270,142 @@ function wrapText(text, maxCharsPerLine = 14, maxLines = 3) {
   return visibleLines;
 }
 
+function drawRoundedRect(context, x, y, width, height, radius) {
+  context.beginPath();
+  context.moveTo(x + radius, y);
+  context.lineTo(x + width - radius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + radius);
+  context.lineTo(x + width, y + height - radius);
+  context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  context.lineTo(x + radius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - radius);
+  context.lineTo(x, y + radius);
+  context.quadraticCurveTo(x, y, x + radius, y);
+  context.closePath();
+}
+
+async function generateResultImage() {
+  if (!lastWinner) return null;
+
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1080;
+  exportCanvas.height = 1350;
+  const exportCtx = exportCanvas.getContext("2d");
+  const gradient = exportCtx.createLinearGradient(0, 0, 1080, 1350);
+  gradient.addColorStop(0, config.backgroundStart);
+  gradient.addColorStop(1, config.backgroundEnd);
+
+  exportCtx.fillStyle = gradient;
+  exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  exportCtx.fillStyle = "rgba(255, 255, 255, 0.12)";
+  exportCtx.beginPath();
+  exportCtx.arc(180, 180, 220, 0, Math.PI * 2);
+  exportCtx.fill();
+  exportCtx.beginPath();
+  exportCtx.arc(940, 1180, 260, 0, Math.PI * 2);
+  exportCtx.fill();
+
+  exportCtx.fillStyle = "rgba(255,255,255,0.93)";
+  drawRoundedRect(exportCtx, 70, 50, 940, 1250, 40);
+  exportCtx.fill();
+
+  exportCtx.fillStyle = "#6b2157";
+  exportCtx.font = "700 36px 'Trebuchet MS', sans-serif";
+  exportCtx.textAlign = "center";
+  exportCtx.fillText("Roleta Eden", 540, 135);
+
+  exportCtx.fillStyle = "#102033";
+  exportCtx.font = "900 58px 'Trebuchet MS', sans-serif";
+  exportCtx.fillText("Resultado do Giro", 540, 210);
+
+  exportCtx.fillStyle = "#5a7084";
+  exportCtx.font = "600 26px 'Trebuchet MS', sans-serif";
+  exportCtx.fillText(formatFullDateTime(new Date()), 540, 260);
+
+  const wheelSize = 720;
+  exportCtx.save();
+  exportCtx.translate((exportCanvas.width - wheelSize) / 2, 320);
+  exportCtx.drawImage(canvas, 0, 0, wheelSize, wheelSize);
+  exportCtx.restore();
+
+  exportCtx.fillStyle = "#f4f1de";
+  exportCtx.beginPath();
+  exportCtx.moveTo(540, 292);
+  exportCtx.lineTo(500, 212);
+  exportCtx.lineTo(580, 212);
+  exportCtx.closePath();
+  exportCtx.fill();
+
+  exportCtx.fillStyle = "#eef4f8";
+  drawRoundedRect(exportCtx, 120, 1090, 840, 140, 28);
+  exportCtx.fill();
+
+  exportCtx.fillStyle = "#5f3452";
+  exportCtx.font = "700 28px 'Trebuchet MS', sans-serif";
+  exportCtx.fillText("Premio sorteado", 540, 1145);
+
+  exportCtx.fillStyle = "#102033";
+  exportCtx.font = "900 48px 'Trebuchet MS', sans-serif";
+  const shareLines = wrapText(lastWinner.label, 22, 2);
+  shareLines.forEach((line, index) => {
+    exportCtx.fillText(line, 540, 1200 + index * 52);
+  });
+
+  return new Promise((resolve) => {
+    exportCanvas.toBlob((blob) => resolve(blob), "image/png");
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function shareResultOnWhatsApp() {
+  if (!lastWinner) return;
+
+  const phone = sanitizeWhatsAppNumber(config?.whatsappNumber);
+  if (!phone) {
+    resultBox.innerHTML = "<strong>Configure o WhatsApp da loja.</strong><span>Adicione o numero em config.json para liberar o envio.</span>";
+    updateWhatsAppButtonState();
+    return;
+  }
+
+  const shareText = buildWhatsAppText(lastWinner.label);
+  const imageBlob = await generateResultImage();
+  const fileName = `roleta-eden-${Date.now()}.png`;
+
+  if (imageBlob && navigator.share) {
+    const shareFile = new File([imageBlob], fileName, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+      try {
+        await navigator.share({
+          title: "Resultado da Roleta Eden",
+          text: shareText,
+          files: [shareFile],
+        });
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+  }
+
+  if (imageBlob) {
+    downloadBlob(imageBlob, fileName);
+  }
+
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(`${shareText} Acabei de baixar o print para anexar aqui.`)}`;
+  window.open(whatsappUrl, "_blank", "noopener");
+}
+
 function drawWheel(rotationDeg = 0) {
   const size = canvas.width;
   const radius = size / 2;
@@ -332,6 +495,8 @@ function spinWheel() {
   ensureAudioContext();
   spinning = true;
   spinButton.disabled = true;
+  whatsappButton.disabled = true;
+  lastWinner = null;
   resultBox.innerHTML = "<strong>Girando...</strong><span>Aguarde o resultado.</span>";
 
   const extraTurns = 6 + Math.floor(Math.random() * 3);
@@ -357,11 +522,13 @@ function spinWheel() {
 
     currentRotation = targetRotation;
     const winner = pickWinner(currentRotation);
+    lastWinner = winner;
     const spinTimestamp = Date.now();
     localStorage.setItem(COOLDOWN_STORAGE_KEY, String(spinTimestamp));
     resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
     spinning = false;
     lastTickSliceIndex = null;
+    updateWhatsAppButtonState();
     startCooldownTimer();
   }
 
@@ -379,6 +546,7 @@ async function loadConfig() {
     config = {
       ...defaultConfig,
       ...data,
+      whatsappNumber: sanitizeWhatsAppNumber(data.whatsappNumber),
       items: Array.isArray(data.items) && data.items.length >= 2
         ? data.items
         : defaultConfig.items,
@@ -390,6 +558,7 @@ async function loadConfig() {
   applyTheme(config);
   drawWheel(currentRotation);
   updateCooldownState();
+  updateWhatsAppButtonState();
   startDateTimeClock();
 }
 
@@ -405,4 +574,5 @@ window.addEventListener("resize", () => {
 });
 
 spinButton.addEventListener("click", spinWheel);
+whatsappButton.addEventListener("click", shareResultOnWhatsApp);
 loadConfig();
