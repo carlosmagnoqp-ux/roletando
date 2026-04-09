@@ -52,6 +52,13 @@ function formatRemainingTime(ms) {
     .join(":");
 }
 
+function formatFullDateTime(date = new Date()) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "full",
+    timeStyle: "medium",
+  }).format(date);
+}
+
 function getLastSpinAt() {
   const raw = localStorage.getItem(COOLDOWN_STORAGE_KEY);
   const timestamp = Number(raw);
@@ -250,8 +257,11 @@ function spinWheel() {
 
     currentRotation = targetRotation;
     const winner = pickWinner(currentRotation);
-    localStorage.setItem(COOLDOWN_STORAGE_KEY, String(Date.now()));
-    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span>`;
+    const spinTimestamp = Date.now();
+    localStorage.setItem(COOLDOWN_STORAGE_KEY, String(spinTimestamp));
+    resultBox.innerHTML = `<strong>Voce ganhou: ${winner.label}</strong><span>Tire um print da tela e nos envie no WhatsApp para garantir seu brinde!</span><span>Data do sorteio: ${formatFullDateTime(
+      new Date(spinTimestamp)
+    )}</span>`;
     spinning = false;
     startCooldownTimer();
   }
