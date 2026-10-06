@@ -37,17 +37,75 @@ const defaultConfig = {
   whatsappNumber: "",
   whatsappMessage: "Oi! Acabei de girar a Roleta Eden e esse foi o meu resultado:",
   items: [
-    { label: "Caneca", color: "#e76f51" },
-    { label: "Chaveiro", color: "#2a9d8f" },
-    { label: "Desconto 10%", color: "#e9c46a" },
-    { label: "Camiseta", color: "#264653" },
-    { label: "Brinde Surpresa", color: "#f4a261" },
-    { label: "Squeeze", color: "#8ab17d" },
+    { label: "Caneca", color: "#e76f51", weight: 20 },
+    { label: "Chaveiro", color: "#2a9d8f", weight: 20 },
+    { label: "Desconto 10%", color: "#e9c46a", weight: 20 },
+    { label: "Camiseta", color: "#264653", weight: 15 },
+    { label: "Brinde Surpresa", color: "#f4a261", weight: 15 },
+    { label: "Squeeze", color: "#8ab17d", weight: 10 },
   ],
 };
 
 function degToRad(deg) {
   return (deg * Math.PI) / 180;
+}
+
+function getTotalWeight(items) {
+  return items.reduce((sum, item) => sum + (item.weight || 1), 0);
+}
+
+function getSliceAngles(items) {
+  const totalWeight = getTotalWeight(items);
+  const angles = [];
+  let currentAngle = -Math.PI / 2;
+  
+  items.forEach((item) => {
+    const weight = item.weight || 1;
+    const sliceAngle = (weight / totalWeight) * Math.PI * 2;
+    angles.push({
+      startAngle: currentAngle,
+      endAngle: currentAngle + sliceAngle,
+      weight: weight,
+      totalWeight: totalWeight
+    });
+    currentAngle += sliceAngle;
+  });
+  
+  return angles;
+}
+
+function getSliceIndexFromRotation(rotationDeg, sliceAngles) {
+  const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
+  const pointerAngle = (360 - normalizedRotation) % 360;
+  const pointerRad = degToRad(pointerAngle);
+  
+  for (let i = 0; i < sliceAngles.length; i++) {
+    const slice = sliceAngles[i];
+    let start = slice.startAngle;
+    let end = slice.endAngle;
+    
+    while (start < 0) start += Math.PI * 2;
+    while (end < 0) end += Math.PI * 2;
+    while (start >= Math.PI * 2) start -= Math.PI * 2;
+    while (end >= Math.PI * 2) end -= Math.PI * 2;
+    
+    let pointer = pointerRad;
+    while (pointer < 0) pointer += Math.PI * 2;
+    while (pointer >= Math.PI * 2) pointer -= Math.PI * 2;
+    
+    if (start <= end) {
+      if (pointer >= start && pointer < end) return i;
+    } else {
+      if (pointer >= start || pointer < end) return i;
+    }
+  }
+  
+  return 0;
+}
+
+function getSliceBoundaryIndex(rotationDeg) {
+  const sliceAngles = getSliceAngles(config.items);
+  return getSliceIndexFromRotation(rotationDeg, sliceAngles);
 }
 
 function sanitizeWhatsAppNumber(value = "") {
@@ -411,7 +469,7 @@ function drawWheel(rotationDeg = 0) {
   const size = canvas.width;
   const radius = size / 2;
   const items = config.items;
-  const sliceAngle = (Math.PI * 2) / items.length;
+  const sliceAngles = getSliceAngles(items);
   const outerRadius = radius - 6;
   const dividerDotRadius = Math.max(3, size * 0.009);
   const dividerDotDistance = outerRadius - Math.max(10, size * 0.03);
@@ -422,8 +480,10 @@ function drawWheel(rotationDeg = 0) {
   ctx.rotate(degToRad(rotationDeg));
 
   items.forEach((item, index) => {
-    const startAngle = index * sliceAngle - Math.PI / 2;
-    const endAngle = startAngle + sliceAngle;
+    const slice = sliceAngles[index];
+    const startAngle = slice.startAngle;
+    const endAngle = slice.endAngle;
+    const sliceAngle = endAngle - startAngle;
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -456,11 +516,9 @@ function drawWheel(rotationDeg = 0) {
     ctx.restore();
   });
 
-  items.forEach((_, index) => {
-    const endAngle = (index + 1) * sliceAngle - Math.PI / 2;
-
+  sliceAngles.forEach((slice) => {
     ctx.save();
-    ctx.rotate(endAngle);
+    ctx.rotate(slice.endAngle);
     ctx.beginPath();
     ctx.arc(dividerDotDistance, 0, dividerDotRadius, 0, Math.PI * 2);
     ctx.fillStyle = config.wheelBorderColor;
@@ -480,10 +538,8 @@ function drawWheel(rotationDeg = 0) {
 }
 
 function pickWinner(finalRotation) {
-  const normalizedRotation = ((finalRotation % 360) + 360) % 360;
-  const pointerAngle = (360 - normalizedRotation) % 360;
-  const sliceSize = 360 / config.items.length;
-  const winnerIndex = Math.floor(pointerAngle / sliceSize) % config.items.length;
+  const sliceAngles = getSliceAngles(config.items);
+  const winnerIndex = getSliceIndexFromRotation(finalRotation, sliceAngles);
   return config.items[winnerIndex];
 }
 

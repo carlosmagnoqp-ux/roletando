@@ -16,27 +16,33 @@
   "items": [
     {
       "label": "1 +100 ML",
-      "color": "#7b2d8e"
+      "color": "#7b2d8e",
+      "weight": 25
     },
     {
       "label": "1 Adicional de Gotas de Chocolate",
-      "color": "#5a189a"
+      "color": "#5a189a",
+      "weight": 20
     },
     {
       "label": "1 Adicional de Nutella",
-      "color": "#9d4edd"
+      "color": "#9d4edd",
+      "weight": 2
     },
     {
       "label": "1 Copo Crocante",
-      "color": "#c77dff"
+      "color": "#c77dff",
+      "weight": 18
     },
     {
       "label": "1 Adicional Creme de Ninho",
-      "color": "#6a4c93"
+      "color": "#6a4c93",
+      "weight": 15
     },
     {
       "label": "1 Adicional Surpresa",
-      "color": "#b07d32"
+      "color": "#b07d32",
+      "weight": 20
     }
   ]
 }
