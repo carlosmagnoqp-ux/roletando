@@ -470,6 +470,7 @@ function drawWheel(rotationDeg = 0) {
   const radius = size / 2;
   const items = config.items;
   const sliceAngles = getSliceAngles(items);
+  const visualSliceAngle = (Math.PI * 2) / items.length;
   const outerRadius = radius - 6;
   const dividerDotRadius = Math.max(3, size * 0.009);
   const dividerDotDistance = outerRadius - Math.max(10, size * 0.03);
@@ -480,10 +481,9 @@ function drawWheel(rotationDeg = 0) {
   ctx.rotate(degToRad(rotationDeg));
 
   items.forEach((item, index) => {
-    const slice = sliceAngles[index];
-    const startAngle = slice.startAngle;
-    const endAngle = slice.endAngle;
-    const sliceAngle = endAngle - startAngle;
+    const startAngle = index * visualSliceAngle - Math.PI / 2;
+    const endAngle = startAngle + visualSliceAngle;
+    const sliceAngle = visualSliceAngle;
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -516,16 +516,18 @@ function drawWheel(rotationDeg = 0) {
     ctx.restore();
   });
 
-  sliceAngles.forEach((slice) => {
+  for (let i = 0; i < items.length; i++) {
+    const endAngle = (i + 1) * visualSliceAngle - Math.PI / 2;
+
     ctx.save();
-    ctx.rotate(slice.endAngle);
+    ctx.rotate(endAngle);
     ctx.beginPath();
     ctx.arc(dividerDotDistance, 0, dividerDotRadius, 0, Math.PI * 2);
     ctx.fillStyle = config.wheelBorderColor;
     ctx.shadowBlur = 0;
     ctx.fill();
     ctx.restore();
-  });
+  }
 
   ctx.beginPath();
   ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
